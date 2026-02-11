@@ -1,26 +1,25 @@
-name: Sync to Hugging Face Spaces
+name: Deploy Space to Hugging Face
 on:
   push:
     branches: [main]
-  # to run this workflow manually from the Actions tab
+    paths:
+      - 'app.py'
+      - 'requirements-space.txt'
   workflow_dispatch:
 
 jobs:
-  sync-to-hub:
+  deploy-space:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - name: Install dependencies
-        run: |
-          pip install huggingface_hub python-dotenv
-      - name: Deploy to Hugging Face
+      - run: pip install huggingface_hub python-dotenv
+      - name: Sync Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_USERNAME: ${{ secrets.HF_USERNAME }}
           HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
           HF_MODEL_NAME: ${{ secrets.HF_MODEL_NAME }}
-        run: python .github/scripts/deploy_to_hf.py
+        run: python .github/scripts/deploy_to_hf.py --mode space
