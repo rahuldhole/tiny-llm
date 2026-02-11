@@ -73,6 +73,8 @@ def train(config_path="configs/train_config.yaml"):
         logging_steps=10,
         save_strategy="no",
         fp16=False,
+        bf16=False,
+        use_cpu=(device == "cpu"),
         push_to_hub=False,
         report_to="none",
         max_length=t["max_length"],
