@@ -1,0 +1,35 @@
+# CI-specific config: fewer epochs for CPU training on GitHub Actions
+model:
+  name: Qwen/Qwen2.5-0.5B-Instruct
+  dtype: float32
+
+metadata:
+  model_name: Tiny LLM
+  author: Rahul Dhole
+  base_model: Qwen/Qwen2.5-0.5B-Instruct
+  license: apache-2.0
+  description: >
+    Tiny LLM is a fine-tuned language model by Rahul Dhole,
+    built on top of Qwen2.5-0.5B-Instruct using LoRA/PEFT.
+
+lora:
+  r: 8
+  alpha: 32
+  dropout: 0.1
+  target_modules:
+    - q_proj
+    - v_proj
+
+training:
+  epochs: 10
+  batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 0.001
+  max_length: 256
+  seed: 42
+
+data:
+  path: data/dummy_train.jsonl
+
+output:
+  dir: outputs/qwen-fine-tuned
