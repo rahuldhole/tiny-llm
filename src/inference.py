@@ -1,71 +1,53 @@
-import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 import sys
 
-# Model ID
-model_id = "Qwen/Qwen2.5-0.5B-Instruct"
+from utils import detect_device
+
+MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+ADAPTER_PATH = "outputs/qwen-fine-tuned"
+
 
 def main():
-    # Check device
-    if torch.backends.mps.is_available():
-        device = "mps"
-        print("Using MPS (Metal Performance Shaders) acceleration!")
-    else:
-        device = "cpu"
-        print("MPS not available. Using CPU. This will be slower.")
+    device = detect_device()
+    print("🧠 Tiny LLM by Rahul Dhole")
+    print(f"   Base: {MODEL_ID} | Device: {device}")
 
-    print(f"Loading model: {model_id}...")
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
+        model = AutoModelForCausalLM.from_pretrained(MODEL_ID).to(device)
 
-        model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
+        # Try loading fine-tuned adapter
+        try:
+            model = PeftModel.from_pretrained(model, ADAPTER_PATH)
+            print(f"   ✅ Adapter loaded from {ADAPTER_PATH}")
+        except Exception:
+            print("   ⚠️  No adapter found, using base model.")
     except Exception as e:
         print(f"Error loading model: {e}")
         sys.exit(1)
 
-    print("Model loaded. Type 'exit' or 'quit' to stop.")
-    print("-" * 50)
-
-    # Chat loop
+    print("Type 'exit' to quit.\n" + "-" * 50)
     history = []
 
     while True:
         try:
             user_input = input("You: ")
-            if user_input.lower() in ["exit", "quit"]:
+            if user_input.lower() in ("exit", "quit"):
                 break
 
-            # Simple chat template construction
             messages = history + [{"role": "user", "content": user_input}]
-
-            text = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True
+            text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            inputs = tokenizer([text], return_tensors="pt").to(device)
+            ids = model.generate(
+                **inputs, max_new_tokens=512, do_sample=True, temperature=0.7,
+                top_p=0.9, pad_token_id=tokenizer.pad_token_id
             )
-
-            model_inputs = tokenizer([text], return_tensors="pt").to(device)
-
-            generated_ids = model.generate(
-                **model_inputs,
-                max_new_tokens=512,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9,
-                pad_token_id=tokenizer.pad_token_id
-            )
-
-            generated_ids = [
-                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-            ]
-
-            response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+            response = tokenizer.decode(ids[0][len(inputs.input_ids[0]):], skip_special_tokens=True)
 
             print(f"Assistant: {response}")
-
-            # Update history (keep simple, maybe limit context window in real app)
             history.append({"role": "user", "content": user_input})
             history.append({"role": "assistant", "content": response})
 
@@ -73,7 +55,8 @@ def main():
             print("\nExiting...")
             break
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     main()

@@ -5,13 +5,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
-
-def detect_device():
-    if torch.cuda.is_available():
-        return "cuda"
-    if torch.backends.mps.is_available():
-        return "mps"
-    return "cpu"
+from utils import detect_device
 
 
 def generate(model, tokenizer, prompt, device):
@@ -75,19 +69,20 @@ def evaluate(adapter_path="outputs/qwen-fine-tuned", output_file="outputs/eval_r
 
     accuracy = passed / len(test_cases)
     summary = {
+        "model": "Tiny LLM by Rahul Dhole",
+        "base_model": base_model_id,
+        "adapter": adapter_path,
         "accuracy": accuracy,
         "passed": passed,
         "total": len(test_cases),
         "results": results,
     }
 
-    # Write JSON results
     with open(output_file, "w") as f:
         json.dump(summary, f, indent=2)
     print(f"\n📊 Accuracy: {passed}/{len(test_cases)} ({accuracy:.0%})")
     print(f"📄 Results saved to {output_file}")
 
-    # CI gate: fail if accuracy < 50%
     if accuracy < 0.5:
         print("❌ Evaluation failed: accuracy below 50%")
         sys.exit(1)
