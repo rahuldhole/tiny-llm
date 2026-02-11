@@ -1,4 +1,4 @@
-name: Train & Deploy Model
+name: Train & Deploy
 on:
   push:
     branches: [main]
@@ -7,10 +7,12 @@ on:
       - 'configs/**'
       - 'src/train.py'
       - 'src/evaluate.py'
+      - 'app.py'
+      - 'requirements-space.txt'
   workflow_dispatch:
 
 jobs:
-  train:
+  train-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -28,7 +30,9 @@ jobs:
           restore-keys: hf-qwen-0.5b-
 
       - name: Install dependencies
-        run: pip install torch transformers peft datasets trl accelerate pyyaml huggingface_hub python-dotenv --index-url https://download.pytorch.org/whl/cpu
+        run: |
+          pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install --no-cache-dir transformers peft datasets trl accelerate pyyaml huggingface_hub python-dotenv
 
       - name: Train
         run: python src/train.py --config configs/train_config.yaml
@@ -36,18 +40,16 @@ jobs:
       - name: Evaluate
         run: python src/evaluate.py --adapter outputs/qwen-fine-tuned --output outputs/eval_results.json
 
-      - name: Upload eval results as artifact
+      - name: Upload eval results
         uses: actions/upload-artifact@v4
         with:
           name: eval-results
           path: outputs/eval_results.json
 
-      - name: Push model to HF Hub
+      - name: Deploy model + Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_USERNAME: ${{ secrets.HF_USERNAME }}
           HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
           HF_MODEL_NAME: ${{ secrets.HF_MODEL_NAME }}
-        run: |
-          pip install python-dotenv
-          python .github/scripts/deploy_to_hf.py --mode model
+        run: python .github/scripts/deploy_to_hf.py --mode all

@@ -30,8 +30,7 @@ task app          # launch Gradio GUI at localhost:7860
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `ci.yml` | Every push/PR | Lint + smoke test |
-| `train.yml` | `data/` or `configs/` changed on main | Train → Evaluate → Upload model to HF Hub |
-| `deploy.yml` | `app.py` changed on main | Sync Gradio app to HF Spaces |
+| `train.yml` | `data/`, `configs/`, or `app.py` changed on main | Train → Evaluate → Deploy model + Space |
 
 ### Setup Secrets
 
