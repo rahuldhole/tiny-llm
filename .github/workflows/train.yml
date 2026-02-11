@@ -11,6 +11,10 @@ on:
       - 'requirements-space.txt'
   workflow_dispatch:
 
+concurrency:
+  group: train-and-deploy
+  cancel-in-progress: true
+
 jobs:
   train-and-deploy:
     runs-on: ubuntu-latest
