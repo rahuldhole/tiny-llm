@@ -2,15 +2,20 @@ version: '3'
 
 tasks:
   setup:
-    desc: Install dependencies
+    desc: Install all dependencies
     cmds:
       - python3 -m venv venv
       - venv/bin/pip install -r requirements.txt
 
   train:
-    desc: Fine-tune the model
+    desc: Fine-tune the model (reads configs/train_config.yaml)
     cmds:
       - venv/bin/python src/train.py
+
+  evaluate:
+    desc: Evaluate fine-tuned model and output JSON results
+    cmds:
+      - venv/bin/python src/evaluate.py
 
   app:
     desc: Launch Gradio GUI locally
@@ -22,23 +27,23 @@ tasks:
     cmds:
       - venv/bin/python src/inference.py
 
-  evaluate:
-    desc: Compare base vs fine-tuned model
+  lint:
+    desc: Lint source code
     cmds:
-      - venv/bin/python src/evaluate.py
+      - venv/bin/ruff check src/ --select E,W,F --ignore E501
 
   deploy-model:
-    desc: Upload fine-tuned adapter weights to HF Hub (run locally after training)
+    desc: Upload adapter weights to HF Hub
     cmds:
       - venv/bin/python .github/scripts/deploy_to_hf.py --mode model
 
   deploy-space:
-    desc: Sync app to HF Spaces (run locally, or auto via CD on push)
+    desc: Sync app to HF Spaces
     cmds:
       - venv/bin/python .github/scripts/deploy_to_hf.py --mode space
 
   deploy:
-    desc: Upload model + sync Space in one shot
+    desc: Upload model + sync Space
     cmds:
       - venv/bin/python .github/scripts/deploy_to_hf.py --mode all
 

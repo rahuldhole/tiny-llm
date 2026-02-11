@@ -4,6 +4,6 @@ peft
 datasets
 accelerate
 trl
-bitsandbytes
-scipy
 gradio
+pyyaml
+ruff
