@@ -2,7 +2,7 @@ import argparse
 import torch
 import yaml
 from datasets import load_dataset
-from peft import LoraConfig, get_peft_model, TaskType
+from peft import LoraConfig, TaskType
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import SFTTrainer, SFTConfig
 
@@ -38,7 +38,7 @@ def train(config_path="configs/train_config.yaml"):
         model_id, torch_dtype=dtype, device_map={"": device}
     )
 
-    # LoRA
+    # LoRA — let SFTTrainer apply it (don't wrap manually)
     lora = cfg["lora"]
     peft_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
@@ -48,8 +48,6 @@ def train(config_path="configs/train_config.yaml"):
         lora_dropout=lora["dropout"],
         target_modules=lora["target_modules"],
     )
-    model = get_peft_model(model, peft_config)
-    model.print_trainable_parameters()
 
     # Dataset
     dataset = load_dataset("json", data_files=cfg["data"]["path"])
