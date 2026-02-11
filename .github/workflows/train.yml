@@ -1,14 +1,14 @@
 name: Train & Deploy
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'data/**'
-      - 'configs/**'
-      - 'src/train.py'
-      - 'src/evaluate.py'
-      - 'app.py'
-      - 'requirements-space.txt'
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'data/**'
+  #     - 'configs/**'
+  #     - 'src/train.py'
+  #     - 'src/evaluate.py'
+  #     - 'app.py'
+  #     - 'requirements-space.txt'
   workflow_dispatch:
 
 concurrency:
