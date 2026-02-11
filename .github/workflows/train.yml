@@ -39,9 +39,13 @@ jobs:
           pip install --no-cache-dir transformers peft datasets trl accelerate pyyaml huggingface_hub python-dotenv
 
       - name: Train
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
         run: python src/train.py --config configs/train_config.yaml
 
       - name: Evaluate
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
         run: python src/evaluate.py --adapter outputs/qwen-fine-tuned --output outputs/eval_results.json
 
       - name: Upload eval results
