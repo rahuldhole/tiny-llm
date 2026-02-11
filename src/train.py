@@ -6,13 +6,7 @@ from peft import LoraConfig, get_peft_model, TaskType
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import SFTTrainer, SFTConfig
 
-
-def detect_device():
-    if torch.cuda.is_available():
-        return "cuda"
-    if torch.backends.mps.is_available():
-        return "mps"
-    return "cpu"
+from utils import detect_device
 
 
 def load_config(path):
@@ -23,10 +17,16 @@ def load_config(path):
 def train(config_path="configs/train_config.yaml"):
     cfg = load_config(config_path)
     device = detect_device()
-    print(f"Device: {device}")
+    meta = cfg.get("metadata", {})
+    print(f"🧠 {meta.get('model_name', 'Model')} by {meta.get('author', 'Unknown')}")
+    print(f"   Base: {cfg['model']['name']} | Device: {device}")
 
     model_id = cfg["model"]["name"]
     dtype = getattr(torch, cfg["model"]["dtype"])
+
+    # Seed for reproducibility
+    seed = cfg["training"].get("seed", 42)
+    torch.manual_seed(seed)
 
     # Tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -77,6 +77,7 @@ def train(config_path="configs/train_config.yaml"):
         report_to="none",
         max_length=t["max_length"],
         dataset_text_field="text",
+        seed=seed,
     )
 
     trainer = SFTTrainer(
@@ -94,11 +95,39 @@ def train(config_path="configs/train_config.yaml"):
     print(f"Saving to {output_dir}")
     trainer.save_model(output_dir)
 
-    # Save config alongside the model for reproducibility
+    # Save config + model card alongside adapter for reproducibility
     with open(f"{output_dir}/train_config.yaml", "w") as f:
         yaml.dump(cfg, f)
 
-    print("Done!")
+    # Generate HF model card
+    model_card = f"""---
+license: {meta.get('license', 'apache-2.0')}
+base_model: {model_id}
+tags:
+  - tiny-llm
+  - lora
+  - peft
+  - fine-tuned
+---
+
+# {meta.get('model_name', 'Tiny LLM')}
+
+**Author**: {meta.get('author', 'Unknown')}
+**Base Model**: [{model_id}](https://huggingface.co/{model_id})
+
+{meta.get('description', '')}
+
+## Training
+
+- **Method**: LoRA (r={lora['r']}, alpha={lora['alpha']})
+- **Epochs**: {t['epochs']}
+- **Learning Rate**: {t['learning_rate']}
+- **Data**: {cfg['data']['path']}
+"""
+    with open(f"{output_dir}/README.md", "w") as f:
+        f.write(model_card)
+
+    print("✅ Done!")
 
 
 if __name__ == "__main__":
