@@ -6,35 +6,43 @@ tasks:
     cmds:
       - python3 -m venv venv
       - venv/bin/pip install -r requirements.txt
-      - venv/bin/pip install gradio
 
   train:
-    desc: Start fine-tuning on dummy data
+    desc: Fine-tune the model
     cmds:
       - venv/bin/python src/train.py
 
-  chat:
-    desc: Launch interactive CLI chat
-    cmds:
-      - venv/bin/python src/inference.py
-
   app:
-    desc: Launch Gradio GUI
+    desc: Launch Gradio GUI locally
     cmds:
       - venv/bin/python src/app.py
 
+  chat:
+    desc: Interactive CLI chat
+    cmds:
+      - venv/bin/python src/inference.py
+
   evaluate:
-    desc: Run evaluation script
+    desc: Compare base vs fine-tuned model
     cmds:
       - venv/bin/python src/evaluate.py
 
-  publish:
-    desc: Push code to GitHub to trigger deployment
+  deploy-model:
+    desc: Upload fine-tuned adapter weights to HF Hub (run locally after training)
     cmds:
-      - 'git add . && git commit -m "Auto-update: $(date)" || true'
-      - git push origin main
+      - venv/bin/python .github/scripts/deploy_to_hf.py --mode model
+
+  deploy-space:
+    desc: Sync app to HF Spaces (run locally, or auto via CD on push)
+    cmds:
+      - venv/bin/python .github/scripts/deploy_to_hf.py --mode space
+
+  deploy:
+    desc: Upload model + sync Space in one shot
+    cmds:
+      - venv/bin/python .github/scripts/deploy_to_hf.py --mode all
 
   sync-secrets:
-    desc: Sync local .env secrets to GitHub Actions
+    desc: Push .env secrets to GitHub Actions
     cmds:
       - bash .github/scripts/sync_secrets.sh

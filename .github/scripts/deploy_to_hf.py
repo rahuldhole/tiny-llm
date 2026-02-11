@@ -1,11 +1,13 @@
 import os
 import sys
+import argparse
 from huggingface_hub import HfApi, create_repo
 from dotenv import load_dotenv
 
 load_dotenv()
 
-def deploy():
+
+def deploy(mode="all"):
     token = os.getenv("HF_TOKEN")
     username = os.getenv("HF_USERNAME")
     space_name = os.getenv("HF_SPACE_NAME")
@@ -16,53 +18,62 @@ def deploy():
         sys.exit(1)
 
     api = HfApi(token=token)
-
-    # 1. Ensure Model Repo exists (for the fine-tuned adapter)
     model_repo_id = f"{username}/{model_name}"
-    try:
-        create_repo(repo_id=model_repo_id, repo_type="model", exist_ok=True)
-        print(f"Model repo ensured: {model_repo_id}")
-    except Exception as e:
-        print(f"Error creating model repo: {e}")
-
-    # 2. Upload Adapter Weights if they exist
-    adapter_path = "outputs/qwen-fine-tuned"
-    if os.path.exists(adapter_path):
-        print(f"Uploading adapter from {adapter_path}...")
-        api.upload_folder(
-            folder_path=adapter_path,
-            repo_id=model_repo_id,
-            repo_type="model",
-            commit_message="Update fine-tuned adapter weights"
-        )
-    else:
-        print(f"Warning: Adapter path {adapter_path} not found. Skipping weight upload.")
-
-    # 3. Ensure Space exists
     space_repo_id = f"{username}/{space_name}"
-    try:
-        create_repo(repo_id=space_repo_id, repo_type="space", space_sdk="gradio", exist_ok=True)
-        print(f"Space ensured: {space_repo_id}")
-    except Exception as e:
-        print(f"Error creating space: {e}")
 
-    # 4. Upload App Files to Space
-    # We include app.py and requirements.txt
-    print("Uploading app files to Space...")
-    files_to_upload = ["app.py", "requirements.txt"]
-    for file in files_to_upload:
-        if os.path.exists(file):
+    # ── Model Upload ──
+    if mode in ("all", "model"):
+        print(f"\n📦 Model repo: {model_repo_id}")
+        create_repo(repo_id=model_repo_id, repo_type="model", exist_ok=True, token=token)
+
+        adapter_path = "outputs/qwen-fine-tuned"
+        if os.path.exists(adapter_path):
+            print(f"   Uploading adapter from {adapter_path}...")
+            api.upload_folder(
+                folder_path=adapter_path,
+                repo_id=model_repo_id,
+                repo_type="model",
+                commit_message="Update fine-tuned adapter weights",
+            )
+            print("   ✅ Model uploaded!")
+        else:
+            print(f"   ❌ Adapter path '{adapter_path}' not found. Run 'task train' first.")
+            sys.exit(1)
+
+    # ── Space Upload ──
+    if mode in ("all", "space"):
+        print(f"\n🚀 Space: {space_repo_id}")
+        create_repo(repo_id=space_repo_id, repo_type="space", space_sdk="gradio", exist_ok=True, token=token)
+
+        # Upload app.py
+        if os.path.exists("app.py"):
             api.upload_file(
-                path_or_fileobj=file,
-                path_in_repo=file,
+                path_or_fileobj="app.py",
+                path_in_repo="app.py",
                 repo_id=space_repo_id,
                 repo_type="space",
-                commit_message=f"Update {file}"
+                commit_message="Update app.py",
             )
-        else:
-            print(f"Warning: {file} not found. Skipping file upload to space.")
 
-    print("Deployment complete!")
+        # Upload requirements-space.txt as requirements.txt in the Space
+        req_file = "requirements-space.txt"
+        if os.path.exists(req_file):
+            api.upload_file(
+                path_or_fileobj=req_file,
+                path_in_repo="requirements.txt",
+                repo_id=space_repo_id,
+                repo_type="space",
+                commit_message="Update requirements.txt",
+            )
+
+        print("   ✅ Space updated!")
+
+    print("\n🎉 Deployment complete!")
+
 
 if __name__ == "__main__":
-    deploy()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=["all", "model", "space"], default="all",
+                        help="What to deploy: 'model', 'space', or 'all'")
+    args = parser.parse_args()
+    deploy(args.mode)
