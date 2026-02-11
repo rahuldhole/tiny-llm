@@ -20,7 +20,7 @@ tasks:
   app:
     desc: Launch Gradio GUI locally
     cmds:
-      - venv/bin/python src/app.py
+      - venv/bin/python app.py
 
   chat:
     desc: Interactive CLI chat

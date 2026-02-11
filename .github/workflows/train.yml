@@ -1,14 +1,14 @@
 name: Train & Deploy
 on:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'data/**'
-  #     - 'configs/**'
-  #     - 'src/train.py'
-  #     - 'src/evaluate.py'
-  #     - 'app.py'
-  #     - 'requirements-space.txt'
+  push:
+    branches: [main]
+    paths:
+      - 'data/**'
+      - 'configs/**'
+      - 'src/train.py'
+      - 'src/evaluate.py'
+      - 'app.py'
+      - 'requirements-space.txt'
   workflow_dispatch:
 
 concurrency:
@@ -18,7 +18,7 @@ concurrency:
 jobs:
   train-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +41,7 @@ jobs:
       - name: Train
         env:
           PYTHONPATH: ${{ github.workspace }}/src
-        run: python src/train.py --config configs/train_config.yaml
+        run: python src/train.py --config configs/train_config_ci.yaml
 
       - name: Evaluate
         env:
