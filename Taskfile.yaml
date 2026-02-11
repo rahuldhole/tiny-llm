@@ -1,0 +1,40 @@
+version: '3'
+
+tasks:
+  setup:
+    desc: Install dependencies
+    cmds:
+      - python3 -m venv venv
+      - venv/bin/pip install -r requirements.txt
+      - venv/bin/pip install gradio
+
+  train:
+    desc: Start fine-tuning on dummy data
+    cmds:
+      - venv/bin/python src/train.py
+
+  chat:
+    desc: Launch interactive CLI chat
+    cmds:
+      - venv/bin/python src/inference.py
+
+  app:
+    desc: Launch Gradio GUI
+    cmds:
+      - venv/bin/python src/app.py
+
+  evaluate:
+    desc: Run evaluation script
+    cmds:
+      - venv/bin/python src/evaluate.py
+
+  publish:
+    desc: Push code to GitHub to trigger deployment
+    cmds:
+      - 'git add . && git commit -m "Auto-update: $(date)" || true'
+      - git push origin main
+
+  sync-secrets:
+    desc: Sync local .env secrets to GitHub Actions
+    cmds:
+      - bash .github/scripts/sync_secrets.sh
