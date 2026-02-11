@@ -10,12 +10,12 @@ tasks:
   train:
     desc: Fine-tune the model (reads configs/train_config.yaml)
     cmds:
-      - venv/bin/python src/train.py
+      - PYTHONPATH=src venv/bin/python src/train.py
 
   evaluate:
     desc: Evaluate fine-tuned model and output JSON results
     cmds:
-      - venv/bin/python src/evaluate.py
+      - PYTHONPATH=src venv/bin/python src/evaluate.py
 
   app:
     desc: Launch Gradio GUI locally
@@ -25,7 +25,7 @@ tasks:
   chat:
     desc: Interactive CLI chat
     cmds:
-      - venv/bin/python src/inference.py
+      - PYTHONPATH=src venv/bin/python src/inference.py
 
   lint:
     desc: Lint source code

@@ -17,7 +17,10 @@ jobs:
       - name: Lint
         run: ruff check src/ --select E,W,F --ignore E501
       - name: Check imports
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
         run: |
-          pip install torch transformers peft datasets trl accelerate gradio pyyaml
-          python -c "from src.train import detect_device, load_config; print('✅ train.py OK')"
-          python -c "from src.evaluate import detect_device; print('✅ evaluate.py OK')"
+          pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install --no-cache-dir transformers peft datasets trl accelerate gradio pyyaml
+          python -c "from train import detect_device, load_config; print('✅ train.py OK')"
+          python -c "from evaluate import detect_device; print('✅ evaluate.py OK')"
