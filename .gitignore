@@ -4,11 +4,11 @@ __pycache__/
 *$py.class
 venv/
 .env
-.env*
-!.env.example
+.env.*
+!env.example
 
-# Models & Trainers
-# outputs/ # Allow tracking of outputs for CD
+# Training outputs (uploaded to HF Hub, not git)
+outputs/
 checkpoint-*/
 wandb/
 
@@ -22,3 +22,4 @@ Thumbs.db
 # IDEs
 .vscode/
 .idea/
+*.swp

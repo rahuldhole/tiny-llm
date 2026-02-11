@@ -1,0 +1,24 @@
+model:
+  name: Qwen/Qwen2.5-0.5B-Instruct
+  dtype: float16
+
+lora:
+  r: 8
+  alpha: 32
+  dropout: 0.1
+  target_modules:
+    - q_proj
+    - v_proj
+
+training:
+  epochs: 50
+  batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 0.001
+  max_length: 512
+
+data:
+  path: data/dummy_train.jsonl
+
+output:
+  dir: outputs/qwen-fine-tuned

@@ -1,4 +1,4 @@
-name: Deploy Space to Hugging Face
+name: Deploy Space
 on:
   push:
     branches: [main]
